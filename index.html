@@ -24,7 +24,7 @@
 	<div class="item">4</div>
 	<div class="item">5</div>
 	<script>
-		var height = $('.item').offsetTop;
+		var height = $('.item')[0].offsetTop;
 		[].forEach.call($('.item'), function(e){
 			e.style.top = height - e.offsetTop + 'px';
 		});
