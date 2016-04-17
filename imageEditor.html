@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+	<title>Document</title>
+	<style>
+		#c{
+			width:100%;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="c" width="400" height="400"></canvas>
+	<img id="img"/>
+	<script>
+		window.$ = function(str){
+			var objs = document.querySelectorAll(str);
+			return objs.length == 1 ? objs[0] : objs;
+		};
+	</script>
+	<script src="ImageEditor.js"></script>
+	<script>
+		var type = 0;//0:移动，1:缩放
+		var started = false;
+		var startPoint = {x: 0, y: 0};
+		var startPoint2 = {x: 0, y: 0};
+		var currentPoint = {x: 0, y:0};
+		var currentPoint2 = {x: 0, y:0};
+		var canvas = $('#c');
+		var startTranslate = {x: 0, y: 0};
+		var imageEditor = new ImageEditor({
+			canvas: canvas
+		});
+		var img = new Image();
+
+		img.src = "share.png";
+
+		img.onload = function(){
+			imageEditor.loadImage(this);
+			imageEditor.translateContext(canvas.width / 2, canvas.height / 2);
+			$('#img').src = imageEditor.getImgUrlData(0, 0, 300, 300);
+		};
+
+		canvas.addEventListener('touchstart', function(e){
+			e.preventDefault();
+			started = true;
+			if(e.touches.length == 2){
+				type = 1;
+				startPoint2.x = e.touches[1].clientX;
+				startPoint2.y = e.touches[1].clientY;
+				currentPoint.x = e.touches[0].clientX;
+				currentPoint.y = e.touches[0].clientY;
+				currentPoint2.x = e.touches[1].clientX;
+				currentPoint2.y = e.touches[1].clientY;
+			}else{
+				//移动状态
+				type = 0;
+				currentPoint.x = e.touches[0].clientX;
+				currentPoint.y = e.touches[0].clientY;
+				startTranslate.x = imageEditor.translate.x;
+				startTranslate.y = imageEditor.translate.y;
+			}
+			startPoint.x = e.touches[0].clientX;
+			startPoint.y = e.touches[0].clientY;
+			requestAnimationFrame(drawImage);
+		});
+		canvas.addEventListener('touchmove', function(e){
+			if(started){
+				e.preventDefault();
+				if(e.touches.length == 2){
+					type = 1;
+					startPoint.x = currentPoint.x;
+					startPoint.y = currentPoint.y;
+					startPoint2.x = currentPoint2.x;
+					startPoint2.y = currentPoint2.y;
+					currentPoint2.x = e.touches[1].clientX;
+					currentPoint2.y = e.touches[1].clientY;
+				}else{
+					type = 0;
+				}
+				currentPoint.x = e.touches[0].clientX;
+				currentPoint.y = e.touches[0].clientY;
+			}
+		});
+		canvas.addEventListener('touchend', function(){
+			started = false;
+		});
+		canvas.addEventListener('touchcancel', function(){
+			started = false;
+		});
+
+		function drawImage(){
+			if(started){
+				switch(type){
+					case 0:
+						imageEditor.setTranslate(currentPoint.x - startPoint.x + startTranslate.x, currentPoint.y - startPoint.y + startTranslate.y);
+						break;
+					case 1:
+						var scale = computeScale(startPoint, startPoint2, currentPoint, currentPoint2);
+						//alert(scale);
+						imageEditor.scaleContext(scale);
+						break;
+				}
+				requestAnimationFrame(drawImage);
+			}
+		}
+
+		function computeScale(sp1, sp2, cp1, cp2){
+			var b1 = Math.sqrt(Math.pow(sp2.x - sp1.x, 2) + Math.pow(sp2.y - sp1.y, 2));
+			var b2 = Math.sqrt(Math.pow(cp2.x - cp1.x, 2) + Math.pow(cp2.y - cp1.y, 2));
+
+			return Math.sqrt(b2 / b1);
+		}
+	</script>
+
+</body>
+</html>
