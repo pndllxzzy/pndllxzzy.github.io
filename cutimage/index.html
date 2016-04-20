@@ -1,0 +1,339 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
+  <meta name="format-detection" content="telephone=no" />
+  <title>Document</title>
+  <style>
+    *{box-sizing: border-box;-webkit-tap-highlight-color:rgba(255,0,0,0);}
+    html,body,ul,button{padding:0;margin:0;}
+    ul,li{list-style:none;}
+    a{text-decoration:none;}
+    html,body{height:100%;}
+    input {
+      outline: none;
+      -webkit-appearance:none;
+    }
+    html{font-size:90px;}
+    body{font-size:.16rem;-webkit-font-smoothing:antialiased;}
+    @media screen and (min-width: 321px){
+      html{font-size:100px;}
+    }
+    @media screen and (min-width: 376px){
+      html{font-size:110px;}
+    }
+    @media screen and (min-width: 426px){
+      html{font-size:120px;}
+    }
+    html,body{
+      position:relative;
+      width:100%;
+      height:100%;
+      text-align:center;
+    }
+    img{display:block;}
+    .title{
+      margin-top:.1rem;
+      color:#fff;
+      font-size:.2rem;
+    }
+    #imgUser{
+      width:100%;
+      height:100%;
+    }
+    #btnLoadFile{
+      display:block;
+      width:100%;
+      height:100%;
+      opacity:0;
+    }
+    #btnCreateImg{
+      position:absolute;
+      left:10%;
+      bottom:5%;
+      width:80%;
+      line-height:.5rem;
+      background-color:#04BE02;
+      color:#fff;
+      -webkit-border-radius: 5px;
+      border-radius: 5px;
+    }
+    #bgImg{
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      z-index:2;
+    }
+    #imgCanvas{
+      width:100%;
+    }
+    #txtInput{
+      width:100%;
+      padding:0;
+      border:0;
+      -webkit-border-radius: 5px;
+      border-radius: 5px;
+      background-color: rgba(0,0,0,0);
+      color:#fff;
+      text-align:center;
+      font-family: Tahoma,Helvetica,Arial,sans-serif;
+    }
+    .container,.area-img,#imgCanvas,.area-file,.area-text,.area-avatar,.area-result,.tips-change-img{
+      position:absolute;
+      width:100%;
+      height:100%;
+      top:0;
+      left:0;
+      z-index:1;
+    }
+    #imgCanvas{
+      display:none;
+      height:auto;
+    }
+    .area-img{
+      z-index:-1;
+    }
+    .container{
+      overflow: hidden;
+      z-index:2;
+    }
+    .area-file{
+      z-index:3;
+    }
+    .placeholder,#txtInput{
+      line-height:1;
+      font-size:20px;
+    }
+    .placeholder{
+      position:absolute;
+      width:100%;
+      z-index:-1;
+    }
+    .area-text {
+      width:100%;
+      height:20px;
+      color:#fff;
+      text-align:center;
+    }
+    #imgResult{
+      width:100%;
+    }
+    .area-result{
+      transform: scale(0, 0) rotateY(1080deg);
+      -webkit-transform: scale(0, 0) rotateY(1080deg);
+      transition: transform 1s;
+      -webkit-transition: -webkit-transform 1s;
+    }
+    .normal{
+      transform: scale(1, 1) rotateY(0deg);
+      -webkit-transform: scale(1, 1) rotateY(0deg);
+    }
+    .tips-change-img{
+      padding-top:.1rem;
+      line-height:.2rem;
+      text-align:center;
+      background:rgba(255,255,255,.5)
+    }
+    .canvasContainer{
+      display:none;
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      z-index:9;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="title">图片生成器</div>
+  <div class="area-file compute" data-position='{"base":750,"top":608,"left":285,"width":173,"height":127}'>
+    <input type="file" id="btnLoadFile"/>
+  </div>
+  <div class="area-text compute" data-position='{"base":750,"top":208}'>
+    <div class="placeholder">输入文字</div>
+    <input id="txtInput" />
+  </div>
+  <div id="btnCreateImg">生成我的图片</div>
+  <div class="area-img">
+    <img id="bgImg" src="../img/bg.png" />
+    <div class="area-avatar compute" data-position='{"base":750,"top":608,"left":285,"width":173,"height":127}'>
+      <div class="tips-change-img">
+        这里可以<br/>换图片
+      </div>
+      <img id="imgUser" src="../img/bg-avatar.jpg" />
+    </div>
+  </div>
+</div>
+<canvas id="imgCanvas" width="750" height="1334"></canvas>
+<div class="area-result">
+  <img id="imgResult" />
+</div>
+<div class="canvasContainer"></div>
+<script src="../js/ImageEditor.js"></script>
+<script src="../js/cutImage.js"></script>
+<script>
+  window.$ = function(str){
+    var objs = document.querySelectorAll(str);
+    return objs.length == 1 ? objs[0] : objs;
+  };
+  window.tools = {
+    extend: function(source1, source2){
+      var result = {};
+
+      for(var key1 in source1){
+        result[key1] = source1[key1];
+      }
+      for(var key2 in source2){
+        result[key2] = result[key2] || source2[key2];
+      }
+      return result;
+    },
+
+    compute: function(el){
+      var info = JSON.parse(el.dataset['position']);
+      var parentWidth = el.parentNode.offsetWidth;
+      var base = info.base;
+      delete info.base;
+      for(var key in info){
+        el.style[key] = parentWidth / base * info[key] + 'px';
+      }
+    },
+
+    loadFile: function(opt){
+      var option = tools.extend({
+        maxSize: 6 * 1024 * 1024,
+        extension: ['png', 'jpg', 'jpeg'],
+        errMsg: {
+          maxSize: '您的图片过大<br/>请选择小于6M的照片',
+          extension: '请上传png、jpg格式的照片'
+        }
+      }, opt);
+      var fr = new FileReader();
+
+      fr.onload = function(e){
+        option.callback(e.target.result);
+      };
+
+      option.inputFile.addEventListener('change', function(e){
+        if(e.target.files.length){
+          if(!option.extension.some(function(o){
+                return e.target.files[0].name.split('.').reverse()[0].toLowerCase().indexOf(o) > -1
+              })){
+            tools.alert({
+              content: option.errMsg.extension,
+              buttonText: '重新上传'
+            });
+          }else if(e.target.files[0].size > option.maxSize){
+            tools.alert({
+              content: option.errMsg.maxSize,
+              buttonText: '重新上传'
+            });
+          }else{
+            fr.readAsDataURL(e.target.files[0]);
+          }
+        }
+      });
+      return this;
+    },
+
+    imgFit: function(el){
+      if(!el){return;}
+      var parent = el.parentNode;
+      var pWidth = window.getComputedStyle(parent).width.replace('px', '');
+      var pHeight = window.getComputedStyle(parent).height.replace('px', '');
+      var imgWidth;
+      var imgHeight;
+        
+      if(pHeight == 0){
+        return;
+      }
+        if(el.width / el.height > pWidth / pHeight){
+          imgHeight = pHeight;
+          imgWidth = pHeight * el.width / el.height;
+        }else{
+          imgWidth = pWidth;
+          imgHeight = pWidth * el.width / el.height;
+        }
+        el.style.height = imgHeight + 'px';
+      el.style.width = imgWidth + 'px';
+      el.style.marginTop = (pHeight - imgHeight) / 2 + 'px';
+      el.style.marginLeft = (pWidth - imgWidth) / 2 + 'px';
+    }
+  };
+  </script>
+  <script>
+  var cutImage;
+  var clientWidth = document.documentElement.clientWidth;
+  var clientHeight = document.documentElement.clientHeight;
+
+  cutImage = new CutImage({
+    container: $('.canvasContainer'),
+    sizeInfo: {
+      w: document.documentElement.clientWidth,
+      h: document.documentElement.clientHeight
+    },
+    cutWindowInfo: {
+      x: 0,
+      y: (clientHeight - clientWidth * 127 / 173) / 2,
+      width: clientWidth,
+      height: clientWidth * 127 / 173
+    },
+    threeTouchCB: function(){
+      $('#imgUser').src = cutImage.getCutUrlData();
+      $('.canvasContainer').style.display = 'none';
+    }
+  });
+  cutImage.init();
+
+  [].forEach.call($('.compute'), function(el){
+    tools.compute(el);
+  });
+
+  $('#imgCanvas').height = 750 / clientWidth * clientHeight;
+
+  tools.loadFile({
+    inputFile: $('#btnLoadFile'),
+    callback: function(res){
+      var img = new Image();
+      img.src = res;
+      cutImage.loadImage(img, true);
+      $('.canvasContainer').style.display = 'block';
+    }
+  });
+
+  $('#txtInput').addEventListener('focus', function(){
+    $('.placeholder').style.display = 'none';
+  });
+
+  $('#txtInput').addEventListener('blur', function(){
+    if(this.value.trim() == ''){
+      $('.placeholder').style.display = 'block';
+    }
+  });
+
+  $('#btnCreateImg').addEventListener('click', function(){
+    $('#imgResult').src = draw();
+    $('.area-result').className += ' normal';
+    $('.container').style.display = 'none';
+  });
+
+  function draw(){
+    var canvas = $('#imgCanvas');
+    var ctx = canvas.getContext('2d');
+
+    ctx.drawImage($('#imgUser'), 285, 608, 173, 127);
+    ctx.drawImage($('#bgImg'), 0, 0, 750, 1334);
+    ctx.font = 750 / document.documentElement.clientWidth * 20 + "px Tahoma,Helvetica,Arial,sans-serif";
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText($('#txtInput').value.trim(), canvas.width / 2, 208 + 750 / document.documentElement.clientWidth * 20);
+
+    return canvas.toDataURL('image/png');
+  }
+</script>
+</body>
+</html>

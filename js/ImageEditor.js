@@ -72,7 +72,7 @@ ImageEditor.prototype.loadImage = function(img){
 };
 
 ImageEditor.prototype._drawImage = function(){
-    if(img) {
+    if(this.img) {
         this.ctx.drawImage(this.img, -this.img.width / 2, -this.img.height / 2);
     }
     return this;
@@ -82,7 +82,7 @@ ImageEditor.prototype._reDrawImage = function(){
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.translate(this.translate.x, this.translate.y);
     this.ctx.scale(this.scale, this.scale);
-    this.ctx.rotate(this.rotate);
+    this.ctx.rotate(this.rotate / 180 * Math.PI);
     this.clearAll()._drawImage();
     return this;
 };

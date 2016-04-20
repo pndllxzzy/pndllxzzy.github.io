@@ -19,7 +19,7 @@
 			return objs.length == 1 ? objs[0] : objs;
 		};
 	</script>
-	<script src="ImageEditor.js"></script>
+	<script src="../js/ImageEditor.js"></script>
 	<script>
 		var type = 0;//0:移动，1:缩放
 		var started = false;
@@ -34,7 +34,7 @@
 		});
 		var img = new Image();
 
-		img.src = "share.png";
+		img.src = "../img/share.png";
 
 		img.onload = function(){
 			imageEditor.loadImage(this);
