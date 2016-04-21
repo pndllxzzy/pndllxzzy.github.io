@@ -33,6 +33,57 @@
       text-align:center;
     }
     img{display:block;}
+    /*loader*/
+    .layer-loader{
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,.7);
+      z-index:99;
+    }
+    .loader-box{
+      position:absolute;
+      left:50%;
+      top:50%;
+      padding: 0.1rem;
+      margin-top:-0.22rem;
+      margin-left:-0.22rem;
+      border-radius:0.1rem;
+      -webkit-border-radius:0.1rem;
+      background:rgba(255,255,255,.7);
+    }
+    .preloader {
+      width: 0.34rem;
+      height: 0.34rem;
+      -webkit-transform-origin: 50%;
+      transform-origin: 50%;
+      -webkit-animation: preloader-spin 1s steps(12, end) infinite;
+      animation: preloader-spin 1s steps(12, end) infinite;
+    }
+    .preloader:after {
+      display: block;
+      content: "";
+      width: 100%;
+      height: 100%;
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D'0%200%20120%20120'%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20xmlns%3Axlink%3D'http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink'%3E%3Cdefs%3E%3Cline%20id%3D'l'%20x1%3D'60'%20x2%3D'60'%20y1%3D'7'%20y2%3D'27'%20stroke%3D'%236c6c6c'%20stroke-width%3D'11'%20stroke-linecap%3D'round'%2F%3E%3C%2Fdefs%3E%3Cg%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.27'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.27'%20transform%3D'rotate(30%2060%2C60)'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.27'%20transform%3D'rotate(60%2060%2C60)'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.27'%20transform%3D'rotate(90%2060%2C60)'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.27'%20transform%3D'rotate(120%2060%2C60)'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.27'%20transform%3D'rotate(150%2060%2C60)'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.37'%20transform%3D'rotate(180%2060%2C60)'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.46'%20transform%3D'rotate(210%2060%2C60)'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.56'%20transform%3D'rotate(240%2060%2C60)'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.66'%20transform%3D'rotate(270%2060%2C60)'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.75'%20transform%3D'rotate(300%2060%2C60)'%2F%3E%3Cuse%20xlink%3Ahref%3D'%23l'%20opacity%3D'.85'%20transform%3D'rotate(330%2060%2C60)'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+      background-position: 50%;
+      background-size: 100%;
+      background-repeat: no-repeat;
+    }
+    @-webkit-keyframes preloader-spin {
+      100% {
+        -webkit-transform: rotate(360deg);
+      }
+    }
+    @keyframes preloader-spin {
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
+      }
+    }
+    /*loader*/
     .title{
       margin-top:.1rem;
       color:#fff;
@@ -145,6 +196,17 @@
       height:100%;
       z-index:9;
     }
+    .tips-cut{
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: .5rem;
+      text-align: center;
+      z-index: 10000;
+      color: #fff;
+      font-size: .2rem;
+    }
   </style>
 </head>
 <body>
@@ -172,100 +234,13 @@
 <div class="area-result">
   <img id="imgResult" />
 </div>
-<div class="canvasContainer"></div>
+<div class="canvasContainer">
+  <div class="tips-cut">三只手指触碰可截图</div>
+</div>
+<script src="../js/tools.js"></script>
 <script src="../js/ImageEditor.js"></script>
 <script src="../js/cutImage.js"></script>
 <script>
-  window.$ = function(str){
-    var objs = document.querySelectorAll(str);
-    return objs.length == 1 ? objs[0] : objs;
-  };
-  window.tools = {
-    extend: function(source1, source2){
-      var result = {};
-
-      for(var key1 in source1){
-        result[key1] = source1[key1];
-      }
-      for(var key2 in source2){
-        result[key2] = result[key2] || source2[key2];
-      }
-      return result;
-    },
-
-    compute: function(el){
-      var info = JSON.parse(el.dataset['position']);
-      var parentWidth = el.parentNode.offsetWidth;
-      var base = info.base;
-      delete info.base;
-      for(var key in info){
-        el.style[key] = parentWidth / base * info[key] + 'px';
-      }
-    },
-
-    loadFile: function(opt){
-      var option = tools.extend({
-        maxSize: 6 * 1024 * 1024,
-        extension: ['png', 'jpg', 'jpeg'],
-        errMsg: {
-          maxSize: '您的图片过大<br/>请选择小于6M的照片',
-          extension: '请上传png、jpg格式的照片'
-        }
-      }, opt);
-      var fr = new FileReader();
-
-      fr.onload = function(e){
-        option.callback(e.target.result);
-      };
-
-      option.inputFile.addEventListener('change', function(e){
-        if(e.target.files.length){
-          if(!option.extension.some(function(o){
-                return e.target.files[0].name.split('.').reverse()[0].toLowerCase().indexOf(o) > -1
-              })){
-            tools.alert({
-              content: option.errMsg.extension,
-              buttonText: '重新上传'
-            });
-          }else if(e.target.files[0].size > option.maxSize){
-            tools.alert({
-              content: option.errMsg.maxSize,
-              buttonText: '重新上传'
-            });
-          }else{
-            fr.readAsDataURL(e.target.files[0]);
-          }
-        }
-      });
-      return this;
-    },
-
-    imgFit: function(el){
-      if(!el){return;}
-      var parent = el.parentNode;
-      var pWidth = window.getComputedStyle(parent).width.replace('px', '');
-      var pHeight = window.getComputedStyle(parent).height.replace('px', '');
-      var imgWidth;
-      var imgHeight;
-        
-      if(pHeight == 0){
-        return;
-      }
-        if(el.width / el.height > pWidth / pHeight){
-          imgHeight = pHeight;
-          imgWidth = pHeight * el.width / el.height;
-        }else{
-          imgWidth = pWidth;
-          imgHeight = pWidth * el.width / el.height;
-        }
-        el.style.height = imgHeight + 'px';
-      el.style.width = imgWidth + 'px';
-      el.style.marginTop = (pHeight - imgHeight) / 2 + 'px';
-      el.style.marginLeft = (pWidth - imgWidth) / 2 + 'px';
-    }
-  };
-  </script>
-  <script>
   var cutImage;
   var clientWidth = document.documentElement.clientWidth;
   var clientHeight = document.documentElement.clientHeight;
@@ -299,9 +274,12 @@
     inputFile: $('#btnLoadFile'),
     callback: function(res){
       var img = new Image();
+
+      img.onload = function(){
+        cutImage.loadImage(img, true);
+        $('.canvasContainer').style.display = 'block';
+      };
       img.src = res;
-      cutImage.loadImage(img, true);
-      $('.canvasContainer').style.display = 'block';
     }
   });
 
@@ -316,9 +294,11 @@
   });
 
   $('#btnCreateImg').addEventListener('click', function(){
+    tools.showLoader();
     $('#imgResult').src = draw();
     $('.area-result').className += ' normal';
     $('.container').style.display = 'none';
+    tools.hideLoader();
   });
 
   function draw(){
