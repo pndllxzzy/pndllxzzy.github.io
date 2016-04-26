@@ -75,7 +75,7 @@
             imgWidth = pHeight * el.width / el.height;
         }else{
             imgWidth = pWidth;
-            imgHeight = pWidth * el.width / el.height;
+            imgHeight = pWidth * el.height / el.width;
         }
         el.style.height = imgHeight + 'px';
         el.style.width = imgWidth + 'px';
