@@ -1,3 +1,4 @@
+/*v0.2*/
 function CutImage(opt){
     this.touchStartHandler = null;
     this.touchMoveHandler = null;
@@ -7,9 +8,8 @@ function CutImage(opt){
     this.started = false;
     this.startPoint = {x: 0, y: 0};
     this.startPoint2 = {x: 0, y: 0};
-    this.currentPoint = {x: 0, y:0};
-    this.currentPoint2 = {x: 0, y:0};
-    this.startTranslate = {x: 0, y: 0};
+    this.currentPoint = {x: 0, y: 0};
+    this.currentPoint2 = {x: 0, y: 0};
     this.cutWindowInfo = opt.cutWindowInfo;
     this.container = opt.container;
     this.sizeInfo = opt.sizeInfo;
@@ -44,25 +44,19 @@ CutImage.prototype.touchStart = function(e){
     switch(e.touches.length){
         case 1://移动状态，记录初始canvas Translate值
             this.type = 0;
-            this.startTranslate.x = this.imageEditor.translate.x;
-            this.startTranslate.y = this.imageEditor.translate.y;
             break;
         case 2://缩放状态，记录两只手指初始点坐标
             this.type = 1;
-            this.startPoint2.x = e.touches[1].clientX;
-            this.startPoint2.y = e.touches[1].clientY;
-            this.currentPoint2.x = e.touches[1].clientX;
-            this.currentPoint2.y = e.touches[1].clientY;
+            this._setPoint(this.currentPoint2, {x: e.touches[1].clientX, y: e.touches[1].clientY});
+            this._setPoint(this.startPoint2, this.currentPoint2);
             break;
         case 3://裁剪
             this.type = 2;
             typeof this.threeTouchCB === 'function' && this.threeTouchCB();
             return;
     }
-    this.startPoint.x = e.touches[0].clientX;
-    this.startPoint.y = e.touches[0].clientY;
-    this.currentPoint.x = e.touches[0].clientX;
-    this.currentPoint.y = e.touches[0].clientY;
+    this._setPoint(this.currentPoint, {x: e.touches[0].clientX, y: e.touches[0].clientY});
+    this._setPoint(this.startPoint, this.currentPoint);
     this.timer = requestAnimationFrame(this._loopDrawImage.bind(this));
 };
 
@@ -71,10 +65,6 @@ CutImage.prototype.touchMove = function(e){
         e.preventDefault();
         if(e.touches.length == 2){
             this.type = 1;
-            this.startPoint.x = this.currentPoint.x;
-            this.startPoint.y = this.currentPoint.y;
-            this.startPoint2.x = this.currentPoint2.x;
-            this.startPoint2.y = this.currentPoint2.y;
             this.currentPoint2.x = e.touches[1].clientX;
             this.currentPoint2.y = e.touches[1].clientY;
         }else{
@@ -163,8 +153,6 @@ CutImage.prototype.drawCutWindow = function(x, y, w, h){
     this.ctxTouchCanvas.rect(0, 0, this.touchCanvas.width, this.touchCanvas.height);
     this.ctxTouchCanvas.fill();
     this.ctxTouchCanvas.clearRect(x, y, w, h);
-    /*this.ctxTouchCanvas.strokeStyle = "#fff";
-    this.ctxTouchCanvas.strokeRect(x, y, w, h);*/
 };
 
 CutImage.prototype.getCutUrlData = function(){
@@ -191,18 +179,34 @@ CutImage.prototype._loopDrawImage = function(){
     }
 };
 
+/*
+* @description 将源点的坐标信息赋值给目标点
+* @param tp {Point} 目标点
+* @param sp {Point} 源点
+*/
+CutImage.prototype._setPoint = function(tp, sp){
+    tp.x = sp.x;
+    tp.y = sp.y;
+};
+
 CutImage.prototype.translateByPoint = function(){
-    var x = this.currentPoint.x - this.startPoint.x + this.startTranslate.x;
-    var y = this.currentPoint.y - this.startPoint.y + this.startTranslate.y;
+    var x = this.currentPoint.x - this.startPoint.x + this.imageEditor.translate.x;
+    var y = this.currentPoint.y - this.startPoint.y + this.imageEditor.translate.y;
 
     if(x != this.imageEditor.translate.x || y != this.imageEditor.translate.y){
         this.imageEditor.setTranslate(x, y);
+        this._setPoint(this.startPoint, this.currentPoint);
     }
 };
 
 CutImage.prototype.scaleByPoint = function(){
     var scale = this.computeScale(this.startPoint, this.startPoint2, this.currentPoint, this.currentPoint2);
-    scale != 1 && this.imageEditor.scaleContext(scale);
+
+    if(scale != 1){
+        this.imageEditor.scaleContext(scale);
+        this._setPoint(this.startPoint, this.currentPoint);
+        this._setPoint(this.startPoint2, this.currentPoint2);
+    }
 };
 
 CutImage.prototype.computeScale = function(sp1, sp2, cp1, cp2){
