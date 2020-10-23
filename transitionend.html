@@ -1,0 +1,28 @@
+<div id="el">move</div>
+
+<script>
+    const div = document.querySelector('#el')
+    let timer
+
+    setTimeout(() => {
+        div.classList.add('move')
+        timer = setInterval(() => {
+            console.log(div.getClientRects()[0].x, new Date())
+        }, 1000)
+    }, 2000)
+
+    div.addEventListener('transitionend', () => {
+        console.log('---transitionend fire')
+        timer && clearInterval(timer)
+    })
+</script>
+
+<style>
+    body {
+        margin: 0;
+    }
+    .move {
+        transform: translate(200px, 200px);
+        transition: all 4s;
+    }
+</style>
